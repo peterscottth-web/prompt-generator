@@ -11,4 +11,10 @@ Professional-grade prompt generator.
 
 ## Try It Live
 👉 [Launch Generator](https://[your-username].github.io/prompt-generator/)
+
+## Free & Open
+No signup required. Works instantly in your browser.
+
 ---
+
+Made with ❤️ for the AI community
