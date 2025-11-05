@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Generator with Quality Validation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .info-banner {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+
+        .info-banner p {
+            color: #334155;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .api-section {
+            background: #fef3c7;
+            border: 2px solid #fbbf24;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .api-section.hidden {
+            display: none;
+        }
+
+        .api-section h3 {
+            color: #92400e;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .output-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8fafc;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .output-section.visible {
+            display: block;
+        }
+
+        .output-section h3 {
+            color: #334155;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .output-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #1e293b;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .copy-button {
+            margin-top: 15px;
+            background: #10b981;
+            padding: 10px 20px;
+            width: auto;
+            font-size: 0.95rem;
+        }
+
+        .copy-button:hover {
+            background: #059669;
+        }
+
+        .quality-checklist {
+            background: #f0fdf4;
+            border: 2px solid #22c55e;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .quality-checklist h4 {
+            color: #15803d;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+        }
+
+        .checklist-item.pass {
+            border-left: 3px solid #22c55e;
+        }
+
+        .checklist-item.warning {
+            border-left: 3px solid #f59e0b;
+            background: #fffbeb;
+        }
+
+        .checklist-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .checklist-text {
+            flex: 1;
+        }
+
+        .checklist-text strong {
+            display: block;
+            color: #334155;
+            margin-bottom: 3px;
+        }
+
+        .checklist-text small {
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .framework-credit {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: center;
+        }
+
+        .framework-credit a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .framework-credit a:hover {
+            text-decoration: underline;
+        }
+
+        .enterprise-notice {
+            background: #dbeafe;
+            border: 2px solid #3b82f6;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .enterprise-notice h3 {
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+
+        .enterprise-notice p {
+            color: #1e3a8a;
+            margin-bottom: 15px;
+        }
+
+        .enterprise-notice a {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .enterprise-notice a:hover {
+            background: #2563eb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .error {
+            background: #fee2e2;
+            border: 2px solid #ef4444;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .content {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AI Prompt Generator</h1>
+            <p>Professional Edition with Quality Validation</p>
+        </div>
+
+        <div class="content">
+            <div class="info-banner">
+                <p><strong>💡 How it works:</strong> Select your category and topic, then generate a structured prompt. Each prompt includes automatic quality validation based on professional stress-testing frameworks.</p>
+            </div>
+
+            <form id="promptForm">
+                <!-- API Connection Option -->
+                <div class="checkbox-group">
+                    <input type="checkbox" id="useApi" name="useApi">
+                    <label for="useApi">Enable AI Enhancement (requires API key)</label>
+                </div>
+
+                <!-- API Settings (Hidden by default) -->
+                <div id="apiSection" class="api-section hidden">
+                    <h3>🔑 API Configuration</h3>
+                    <div class="form-group">
+                        <label for="llmProvider">Select LLM Provider:</label>
+                        <select id="llmProvider" name="llmProvider">
+                            <option value="">-- Choose Provider --</option>
+                            <option value="claude">Anthropic Claude (Recommended)</option>
+                            <option value="openai">OpenAI (GPT-4/3.5)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="apiKey">API Key:</label>
+                        <input type="password" id="apiKey" name="apiKey" placeholder="Enter your API key">
+                        <small style="color: #64748b; display: block; margin-top: 5px;">Your key is stored locally and never sent to our servers</small>
+                    </div>
+                </div>
+
+                <!-- Category Selection -->
+                <div class="form-group">
+                    <label for="category">Category:</label>
+                    <select id="category" name="category" required>
+                        <option value="">-- Select Category --</option>
+                        <option value="marketing">Marketing & Advertising</option>
+                        <option value="content">Content Creation & Writing</option>
+                        <option value="coding">Software Development & Coding</option>
+                        <option value="business">Business & Strategy</option>
+                        <option value="education">Education & Learning</option>
+                        <option value="creative">Creative & Design</option>
+                        <option value="data">Data Analysis & Research</option>
+                        <option value="productivity">Productivity & Automation</option>
+                        <option value="enterprise">Enterprise/Business Solutions</option>
+                    </select>
+                </div>
+
+                <!-- Subcategory Selection -->
+                <div class="form-group">
+                    <label for="subcategory">Subcategory:</label>
+                    <select id="subcategory" name="subcategory" required>
+                        <option value="">-- Select Category First --</option>
+                    </select>
+                </div>
+
+                <!-- Topic Input -->
+                <div class="form-group">
+                    <label for="topic">Your Topic or Task:</label>
+                    <textarea id="topic" name="topic" placeholder="Describe what you want the AI to help you with..." required></textarea>
+                </div>
+
+                <!-- Tone Selection -->
+                <div class="form-group">
+                    <label for="tone">Desired Tone:</label>
+                    <select id="tone" name="tone">
+                        <option value="professional">Professional</option>
+                        <option value="casual">Casual</option>
+                        <option value="technical">Technical</option>
+                        <option value="creative">Creative</option>
+                        <option value="friendly">Friendly</option>
+                        <option value="formal">Formal</option>
+                    </select>
+                </div>
+
+                <!-- Response Length -->
+                <div class="form-group">
+                    <label for="length">Response Length:</label>
+                    <select id="length" name="length">
+                        <option value="brief">Brief (1-2 paragraphs)</option>
+                        <option value="medium">Medium (3-5 paragraphs)</option>
+                        <option value="detailed">Detailed (6-10 paragraphs)</option>
+                        <option value="comprehensive">Comprehensive (Full analysis)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="button" id="generateBtn">Generate Prompt</button>
+            </form>
+
+            <!-- Output Section -->
+            <div id="outputSection" class="output-section">
+                <h3>✨ Your Generated Prompt:</h3>
+                <div id="outputContent" class="output-content"></div>
+                <button class="button copy-button" id="copyBtn">📋 Copy to Clipboard</button>
+
+                <!-- Quality Checklist -->
+                <div class="quality-checklist">
+                    <h4>
+                        <span>🔍</span>
+                        <span>Prompt Quality Assessment</span>
+                    </h4>
+                    <div id="qualityChecklist"></div>
+                    <div class="framework-credit">
+                        Based on the 5-step stress-testing framework by <strong>Nate B. Jones</strong> - 
+                        "Stress-Testing Prompts Before Production"
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enterprise Notice -->
+            <div id="enterpriseNotice" class="enterprise-notice" style="display: none;">
+                <h3>🏢 Enterprise Solutions</h3>
+                <p>Looking for custom AI implementations, team training, or enterprise-grade prompt systems?</p>
+                <a href="mailto:your-email@example.com?subject=Enterprise Inquiry">Contact Us for a Quote</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Subcategory mappings
+        const subcategories = {
+            marketing: [
+                'Social Media Posts',
+                'Email Campaigns',
+                'Ad Copy',
+                'Product Descriptions',
+                'SEO Content',
+                'Landing Pages',
+                'Brand Messaging',
+                'Campaign Strategy'
+            ],
+            content: [
+                'Blog Articles',
+                'Copywriting',
+                'Storytelling',
+                'Technical Writing',
+                'Video Scripts',
+                'Podcast Outlines',
+                'Newsletter Content',
+                'Press Releases'
+            ],
+            coding: [
+                'Code Generation',
+                'Debugging Help',
+                'Code Review',
+                'Documentation',
+                'Algorithm Design',
+                'API Integration',
+                'Testing Strategies',
+                'Refactoring'
+            ],
+            business: [
+                'Strategy Planning',
+                'Business Plans',
+                'Market Analysis',
+                'Financial Projections',
+                'Presentations',
+                'Meeting Agendas',
+                'Proposals',
+                'Case Studies'
+            ],
+            education: [
+                'Lesson Plans',
+                'Study Guides',
+                'Explanations',
+                'Quiz Creation',
+                'Curriculum Design',
+                'Educational Content',
+                'Research Assistance',
+                'Essay Outlines'
+            ],
+            creative: [
+                'Story Ideas',
+                'Character Development',
+                'Plot Outlines',
+                'Poetry',
+                'Design Concepts',
+                'Visual Descriptions',
+                'Creative Briefs',
+                'Brainstorming'
+            ],
+            data: [
+                'Data Analysis',
+                'Statistical Analysis',
+                'Research Synthesis',
+                'Survey Design',
+                'Report Writing',
+                'Data Visualization',
+                'Literature Reviews',
+                'Hypothesis Testing'
+            ],
+            productivity: [
+                'Task Management',
+                'Workflow Optimization',
+                'Email Templates',
+                'Meeting Notes',
+                'Time Management',
+                'Process Documentation',
+                'Automation Scripts',
+                'Checklist Creation'
+            ],
+            enterprise: [
+                'Please contact for quotation'
+            ]
+        };
+
+        // DOM Elements
+        const form = document.getElementById('promptForm');
+        const categorySelect = document.getElementById('category');
+        const subcategorySelect = document.getElementById('subcategory');
+        const useApiCheckbox = document.getElementById('useApi');
+        const apiSection = document.getElementById('apiSection');
+        const outputSection = document.getElementById('outputSection');
+        const outputContent = document.getElementById('outputContent');
+        const copyBtn = document.getElementById('copyBtn');
+        const enterpriseNotice = document.getElementById('enterpriseNotice');
+
+        // Toggle API section
+        useApiCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                apiSection.classList.remove('hidden');
+            } else {
+                apiSection.classList.add('hidden');
+            }
+        });
+
+        // Update subcategories based on category
+        categorySelect.addEventListener('change', function() {
+            const category = this.value;
+            subcategorySelect.innerHTML = '<option value="">-- Select Subcategory --</option>';
+            
+            if (category === 'enterprise') {
+                enterpriseNotice.style.display = 'block';
+                subcategorySelect.innerHTML = '<option value="contact">Please contact for quotation</option>';
+                subcategorySelect.disabled = true;
+            } else {
+                enterpriseNotice.style.display = 'none';
+                subcategorySelect.disabled = false;
+                
+                if (category && subcategories[category]) {
+                    subcategories[category].forEach(sub => {
+                        const option = document.createElement('option');
+                        option.value = sub.toLowerCase().replace(/\s+/g, '-');
+                        option.textContent = sub;
+                        subcategorySelect.appendChild(option);
+                    });
+                }
+            }
+        });
+
+        // Generate structured prompt (offline mode)
+        function generateStructuredPrompt(formData) {
+            const category = formData.get('category');
+            const subcategory = formData.get('subcategory');
+            const topic = formData.get('topic');
+            const tone = formData.get('tone');
+            const length = formData.get('length');
+
+            let lengthInstruction = '';
+            switch(length) {
+                case 'brief': lengthInstruction = 'Keep the response brief and concise (1-2 paragraphs).'; break;
+                case 'medium': lengthInstruction = 'Provide a medium-length response (3-5 paragraphs).'; break;
+                case 'detailed': lengthInstruction = 'Provide a detailed response (6-10 paragraphs).'; break;
+                case 'comprehensive': lengthInstruction = 'Provide a comprehensive analysis with all relevant details.'; break;
+            }
+
+            const prompt = `You are an expert in ${category} with specialization in ${subcategory}.
+
+Task: ${topic}
+
+Instructions:
+- Adopt a ${tone} tone throughout your response
+- ${lengthInstruction}
+- Provide specific, actionable insights
+- Use clear structure and formatting
+- Include relevant examples where appropriate
+
+Please provide your response now:`;
+
+            return prompt;
+        }
+
+        // Analyze prompt quality based on stress-testing framework
+        function analyzePromptQuality(prompt, topic) {
+            const checks = [];
+            
+            // Check 1: Clear instructions
+            const hasInstructions = prompt.toLowerCase().includes('instructions:') || 
+                                   prompt.toLowerCase().includes('task:');
+            checks.push({
+                pass: hasInstructions,
+                title: 'Clear Instructions',
+                description: hasInstructions 
+                    ? 'Prompt includes explicit instructions and task definition.'
+                    : 'Consider adding more explicit instructions about expected output format.'
+            });
+
+            // Check 2: Context provided
+            const hasContext = prompt.includes('You are an expert') || 
+                              prompt.includes('specialization');
+            checks.push({
+                pass: hasContext,
+                title: 'Context & Role Definition',
+                description: hasContext
+                    ? 'AI role and expertise level clearly defined.'
+                    : 'Add context about the AI\'s role or expertise for better results.'
+            });
+
+            // Check 3: Tone specification
+            const hasTone = prompt.toLowerCase().includes('tone') ||
+                           prompt.toLowerCase().includes('style');
+            checks.push({
+                pass: hasTone,
+                title: 'Tone Specification',
+                description: hasTone
+                    ? 'Output tone is explicitly specified.'
+                    : 'Specify the desired tone (professional, casual, technical, etc.).'
+            });
+
+            // Check 4: Length guidance
+            const hasLength = prompt.toLowerCase().includes('paragraph') ||
+                             prompt.toLowerCase().includes('brief') ||
+                             prompt.toLowerCase().includes('detailed') ||
+                             prompt.toLowerCase().includes('comprehensive');
+            checks.push({
+                pass: hasLength,
+                title: 'Length Guidelines',
+                description: hasLength
+                    ? 'Expected response length is specified.'
+                    : 'Add guidance on expected response length to avoid over/under-delivery.'
+            });
+
+            // Check 5: Format specification
+            const hasFormat = prompt.toLowerCase().includes('format') ||
+                             prompt.toLowerCase().includes('structure') ||
+                             prompt.toLowerCase().includes('organize');
+            checks.push({
+                pass: hasFormat,
+                title: 'Output Structure',
+                description: hasFormat
+                    ? 'Output structure and formatting are addressed.'
+                    : 'Consider specifying output format (bullet points, numbered list, paragraphs, etc.).'
+            });
+
+            // Check 6: Examples mentioned
+            const hasExamples = prompt.toLowerCase().includes('example');
+            checks.push({
+                pass: hasExamples,
+                title: 'Examples Requested',
+                description: hasExamples
+                    ? 'Prompt requests relevant examples for clarity.'
+                    : 'Tip: Add "Include relevant examples" for more concrete outputs.'
+            });
+
+            // Check 7: Specificity
+            const topicLength = topic.trim().length;
+            const isSpecific = topicLength > 30;
+            checks.push({
+                pass: isSpecific,
+                title: 'Task Specificity',
+                description: isSpecific
+                    ? 'Task description is detailed and specific.'
+                    : 'Tip: More detailed task descriptions lead to better results. Add constraints, requirements, or desired outcomes.'
+            });
+
+            return checks;
+        }
+
+        // Display quality checklist
+        function displayQualityChecklist(checks) {
+            const checklistDiv = document.getElementById('qualityChecklist');
+            checklistDiv.innerHTML = '';
+
+            checks.forEach(check => {
+                const item = document.createElement('div');
+                item.className = `checklist-item ${check.pass ? 'pass' : 'warning'}`;
+                
+                item.innerHTML = `
+                    <div class="checklist-icon">${check.pass ? '✅' : '⚠️'}</div>
+                    <div class="checklist-text">
+                        <strong>${check.title}</strong>
+                        <small>${check.description}</small>
+                    </div>
+                `;
+                
+                checklistDiv.appendChild(item);
+            });
+        }
+
+        // Enhanced prompt with AI
+        async function enhanceWithAI(structuredPrompt, provider, apiKey) {
+            const endpoints = {
+                claude: 'https://api.anthropic.com/v1/messages',
+                openai: 'https://api.openai.com/v1/chat/completions'
+            };
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            let body;
+
+            if (provider === 'claude') {
+                headers['x-api-key'] = apiKey;
+                headers['anthropic-version'] = '2023-06-01';
+                body = JSON.stringify({
+                    model: 'claude-3-5-sonnet-20241022',
+                    max_tokens: 1024,
+                    messages: [{
+                        role: 'user',
+                        content: `Analyze and improve this prompt for clarity, specificity, and effectiveness:\n\n${structuredPrompt}\n\nProvide the improved version.`
+                    }]
+                });
+            } else if (provider === 'openai') {
+                headers['Authorization'] = `Bearer ${apiKey}`;
+                body = JSON.stringify({
+                    model: 'gpt-4',
+                    messages: [{
+                        role: 'user',
+                        content: `Analyze and improve this prompt for clarity, specificity, and effectiveness:\n\n${structuredPrompt}\n\nProvide the improved version.`
+                    }]
+                });
+            }
+
+            const response = await fetch(endpoints[provider], {
+                method: 'POST',
+                headers: headers,
+                body: body
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (provider === 'claude') {
+                return data.content[0].text;
+            } else if (provider === 'openai') {
+                return data.choices[0].message.content;
+            }
+        }
+
+        // Form submission
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const useApi = useApiCheckbox.checked;
+            const category = formData.get('category');
+            
+            // Handle enterprise selection
+            if (category === 'enterprise') {
+                alert('Thank you for your interest in enterprise solutions! Please use the contact button below to get a customized quote.');
+                return;
+            }
+
+            outputSection.classList.remove('visible');
+            const generateBtn = document.getElementById('generateBtn');
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Generating...';
+
+            try {
+                // Generate base structured prompt
+                const structuredPrompt = generateStructuredPrompt(formData);
+                const topic = formData.get('topic');
+
+                // Analyze quality
+                const qualityChecks = analyzePromptQuality(structuredPrompt, topic);
+
+                if (useApi) {
+                    const provider = formData.get('llmProvider');
+                    const apiKey = formData.get('apiKey');
+
+                    if (!provider || !apiKey) {
+                        throw new Error('Please select a provider and enter your API key');
+                    }
+
+                    outputContent.innerHTML = '<div class="loading">🔄 Enhancing your prompt with AI...</div>';
+                    outputSection.classList.add('visible');
+
+                    // Enhance with AI
+                    const enhancedPrompt = await enhanceWithAI(structuredPrompt, provider, apiKey);
+                    outputContent.textContent = enhancedPrompt;
+                    
+                    // Re-analyze enhanced prompt
+                    const enhancedChecks = analyzePromptQuality(enhancedPrompt, topic);
+                    displayQualityChecklist(enhancedChecks);
+                } else {
+                    // Show structured prompt immediately
+                    outputContent.textContent = structuredPrompt;
+                    displayQualityChecklist(qualityChecks);
+                    outputSection.classList.add('visible');
+                }
+
+            } catch (error) {
+                outputContent.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                outputSection.classList.add('visible');
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Generate Prompt';
+            }
+        });
+
+        // Copy to clipboard
+        copyBtn.addEventListener('click', function() {
+            const text = outputContent.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
